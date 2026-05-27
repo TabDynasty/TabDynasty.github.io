@@ -5,8 +5,8 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <meta name="robots" content="index, follow">
-<title>My First Post | My New Hugo Project</title>
-<meta name="keywords" content="">
+<title>My First Post | My web</title>
+<meta name="keywords" content="Go, Hugo, 中文">
 <meta name="description" content="Introduction
 This is bold text, and this is emphasized text.">
 <meta name="author" content="">
@@ -66,14 +66,17 @@ This is bold text, and this is emphasized text.">
     }
 
 </script><meta property="og:url" content="https://TabDynasty.github.io/posts/my-first-post/">
-  <meta property="og:site_name" content="My New Hugo Project">
+  <meta property="og:site_name" content="My web">
   <meta property="og:title" content="My First Post">
   <meta property="og:description" content="Introduction This is bold text, and this is emphasized text.">
-  <meta property="og:locale" content="en_us">
+  <meta property="og:locale" content="zh_cn">
   <meta property="og:type" content="article">
     <meta property="article:section" content="posts">
     <meta property="article:published_time" content="2026-05-26T16:43:53+08:00">
     <meta property="article:modified_time" content="2026-05-26T16:43:53+08:00">
+    <meta property="article:tag" content="Go">
+    <meta property="article:tag" content="Hugo">
+    <meta property="article:tag" content="中文">
 
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="My First Post">
@@ -108,7 +111,7 @@ This is bold text, and this is emphasized text.">
   "name": "My First Post",
   "description": "Introduction This is bold text, and this is emphasized text.\n",
   "keywords": [
-    
+    "Go", "Hugo", "中文"
   ],
   "articleBody": "Introduction This is bold text, and this is emphasized text.\n",
   "wordCount" : "10",
@@ -121,7 +124,7 @@ This is bold text, and this is emphasized text.">
   },
   "publisher": {
     "@type": "Organization",
-    "name": "My New Hugo Project",
+    "name": "My web",
     "logo": {
       "@type": "ImageObject",
       "url": "https://TabDynasty.github.io/favicon.ico"
@@ -134,7 +137,7 @@ This is bold text, and this is emphasized text.">
     <header class="header">
     <nav class="header-nav">
         <div class="logo">
-            <a href="https://TabDynasty.github.io/" accesskey="h" title="My New Hugo Project (Alt + H)">My New Hugo Project</a>
+            <a href="https://TabDynasty.github.io/" accesskey="h" title="My web (Alt + H)">My web</a>
             <div class="logo-switches">
                 <button id="theme-toggle" class="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
                     <svg class="moon" xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24"
@@ -159,6 +162,21 @@ This is bold text, and this is emphasized text.">
             </div>
         </div>
         <ul id="menu" class="menu">
+            <li>
+                <a href="https://TabDynasty.github.io/archives/" title="Archive">
+                    <span>Archive</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://TabDynasty.github.io/search/" title="Search">
+                    <span>Search</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://TabDynasty.github.io/tags/" title="Tag">
+                    <span>Tag</span>
+                </a>
+            </li>
         </ul>
     </nav>
 </header>
@@ -166,7 +184,18 @@ This is bold text, and this is emphasized text.">
 
 <article class="post-single">
   <header class="post-header">
-    
+    <nav class="breadcrumbs" role="navigation" aria-label="Breadcrumb">
+            <a href="/">Home</a>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-right">
+                <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+            <a href="/posts/">Posts</a>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-right">
+        <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+</nav>
     <h1 class="post-title entry-hint-parent">
       My First Post
     </h1>
@@ -184,13 +213,17 @@ This is bold text, and this is emphasized text.">
 
   <footer class="post-footer">
     <ul class="post-tags">
+      <li><a href="https://TabDynasty.github.io/tags/go/">Go</a></li>
+      <li><a href="https://TabDynasty.github.io/tags/hugo/">Hugo</a></li>
+      <li><a href="https://TabDynasty.github.io/tags/%E4%B8%AD%E6%96%87/">中文</a></li>
     </ul>
+
   </footer>
 </article>
     </main>
     
 <footer class="footer">
-        <span>&copy; 2026 <a href="https://TabDynasty.github.io/">My New Hugo Project</a></span> · 
+        <span>&copy; 2026 <a href="https://TabDynasty.github.io/">My web</a></span> · 
 
     
     
@@ -266,6 +299,53 @@ This is bold text, and this is emphasized text.">
         }
     })
 
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerHTML = 'copy';
+
+        function copyingDone() {
+            copybutton.innerHTML = 'copied!';
+            setTimeout(() => {
+                copybutton.innerHTML = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
 </script>
 </body>
 
