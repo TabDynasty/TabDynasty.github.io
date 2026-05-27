@@ -65,7 +65,17 @@ This is bold text, and this is emphasized text.">
         document.querySelector("html").dataset.theme = 'light';
     }
 
-</script><meta property="og:url" content="https://TabDynasty.github.io/posts/my-first-post/">
+</script>
+<script>
+window.MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']],
+    displayMath: [['$$', '$$']]
+  }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<meta property="og:url" content="https://TabDynasty.github.io/posts/my-first-post/">
   <meta property="og:site_name" content="My web">
   <meta property="og:title" content="My First Post">
   <meta property="og:description" content="Introduction This is bold text, and this is emphasized text.">
@@ -215,6 +225,12 @@ This is bold text, and this is emphasized text.">
       <li><a href="https://TabDynasty.github.io/tags/go/">Go</a></li>
       <li><a href="https://TabDynasty.github.io/tags/hugo/">Hugo</a></li>
     </ul>
+<nav class="paginav">
+  <a class="prev" href="https://TabDynasty.github.io/posts/test/">
+    <span class="title">« Prev</span>
+    <span>Test</span>
+  </a>
+</nav>
 
   </footer>
 </article>
