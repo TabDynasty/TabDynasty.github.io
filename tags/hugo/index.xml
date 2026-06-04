@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
-    <title>Hugo on My web</title>
-    <link>https://TabDynasty.github.io/tags/hugo/</link>
-    <description>Recent content in Hugo on My web</description>
+    <title>Hugo on TabDynasty&#39;s Blog</title>
+    <link>http://localhost:1313/tags/hugo/</link>
+    <description>Recent content in Hugo on TabDynasty&#39;s Blog</description>
     <generator>Hugo</generator>
-    <language>en</language>
+    <language>zh-cn</language>
     <lastBuildDate>Wed, 27 May 2026 13:16:06 +0800</lastBuildDate>
-    <atom:link href="https://TabDynasty.github.io/tags/hugo/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="http://localhost:1313/tags/hugo/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Test</title>
-      <link>https://TabDynasty.github.io/posts/test/</link>
+      <link>http://localhost:1313/posts/test/</link>
       <pubDate>Wed, 27 May 2026 13:16:06 +0800</pubDate>
-      <guid>https://TabDynasty.github.io/posts/test/</guid>
+      <guid>http://localhost:1313/posts/test/</guid>
       <description>&lt;h1 id=&#34;hello-every-one&#34;&gt;hello every one&lt;/h1&gt;
 &lt;p&gt;$$
 \alpha =\beta +\gamma
@@ -20,11 +20,13 @@ $$&lt;/p&gt;</description>
     </item>
     <item>
       <title>My First Post</title>
-      <link>https://TabDynasty.github.io/posts/my-first-post/</link>
+      <link>http://localhost:1313/posts/my-first-post/</link>
       <pubDate>Tue, 26 May 2026 16:43:53 +0800</pubDate>
-      <guid>https://TabDynasty.github.io/posts/my-first-post/</guid>
+      <guid>http://localhost:1313/posts/my-first-post/</guid>
       <description>&lt;h2 id=&#34;introduction&#34;&gt;Introduction&lt;/h2&gt;
-&lt;p&gt;This is &lt;strong&gt;bold&lt;/strong&gt; text, and this is &lt;em&gt;emphasized&lt;/em&gt; text.&lt;/p&gt;</description>
+&lt;p&gt;This is &lt;strong&gt;bold&lt;/strong&gt; text, and this is &lt;em&gt;emphasized&lt;/em&gt; text.&lt;/p&gt;
+&lt;h2 id=&#34;conclusion&#34;&gt;Conclusion&lt;/h2&gt;
+&lt;p&gt;现在中文时间到了。&lt;/p&gt;</description>
     </item>
   </channel>
 </rss>
