@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="zh" dir="auto" data-theme="auto">
+
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>PX4几何控制器实现 | TabDynasty&#39;s Blog</title>
+<meta name="keywords" content="PX4, controller">
+<meta name="description" content="PX4是一个能够非常方便进行二次开发的无人机飞控。对于科研的实验算法复现，可以使用PX4开放给开发者的app来完成，本文所复现的几何控制器完成了PX4中混控器之前所有控制器件的作用，最终输出规一化的力和力矩。">
+<meta name="author" content="">
+<link rel="canonical" href="https://TabDynasty.github.io/posts/px4_geometric_controller/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.72854c9f77ee01684937b31d3ba4ff4bef2079c4d1b55f2e140b1a80ada919a9.css" integrity="sha256-coVMn3fuAWhJN7MdO6T/S&#43;8gecTRtV8uFAsagK2pGak=" rel="preload stylesheet" as="style">
+<link rel="icon" href="https://TabDynasty.github.io/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="https://TabDynasty.github.io/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://TabDynasty.github.io/favicon-32x32.png">
+<link rel="apple-touch-icon" href="https://TabDynasty.github.io/apple-touch-icon.png">
+<link rel="mask-icon" href="https://TabDynasty.github.io/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="zh" href="https://TabDynasty.github.io/posts/px4_geometric_controller/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+                color-scheme: dark;
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .toc {
+                background: var(--entry);
+            }
+        }
+
+    </style>
+</noscript>
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else if (localStorage.getItem("pref-theme") === "light") {
+       document.querySelector("html").dataset.theme = 'light';
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else {
+        document.querySelector("html").dataset.theme = 'light';
+    }
+
+</script>
+<script>
+window.MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']],
+    displayMath: [['$$', '$$']]
+  }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<meta property="og:url" content="https://TabDynasty.github.io/posts/px4_geometric_controller/">
+  <meta property="og:site_name" content="TabDynasty&#39;s Blog">
+  <meta property="og:title" content="PX4几何控制器实现">
+  <meta property="og:description" content="PX4是一个能够非常方便进行二次开发的无人机飞控。对于科研的实验算法复现，可以使用PX4开放给开发者的app来完成，本文所复现的几何控制器完成了PX4中混控器之前所有控制器件的作用，最终输出规一化的力和力矩。">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2026-06-04T17:50:34+08:00">
+    <meta property="article:modified_time" content="2026-06-04T17:50:34+08:00">
+    <meta property="article:tag" content="PX4">
+    <meta property="article:tag" content="Controller">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="PX4几何控制器实现">
+  <meta name="twitter:description" content="PX4是一个能够非常方便进行二次开发的无人机飞控。对于科研的实验算法复现，可以使用PX4开放给开发者的app来完成，本文所复现的几何控制器完成了PX4中混控器之前所有控制器件的作用，最终输出规一化的力和力矩。">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Posts",
+      "item": "https://TabDynasty.github.io/posts/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "PX4几何控制器实现",
+      "item": "https://TabDynasty.github.io/posts/px4_geometric_controller/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "PX4几何控制器实现",
+  "name": "PX4几何控制器实现",
+  "description": "PX4是一个能够非常方便进行二次开发的无人机飞控。对于科研的实验算法复现，可以使用PX4开放给开发者的app来完成，本文所复现的几何控制器完成了PX4中混控器之前所有控制器件的作用，最终输出规一化的力和力矩。\n",
+  "keywords": [
+    "PX4", "controller"
+  ],
+  "articleBody": "PX4是一个能够非常方便进行二次开发的无人机飞控。对于科研的实验算法复现，可以使用PX4开放给开发者的app来完成，本文所复现的几何控制器完成了PX4中混控器之前所有控制器件的作用，最终输出规一化的力和力矩。\nPX4 二次开发 PX4源码的目录下面有两个文件夹，/src/examples和/src/modules，前者是专门留给用户进行自定义算法app实现，后者则是将PX4原生的控制器暴露在用户面前，用户可以自定义飞控中控制器的开关。我现在复现的几何控制器就是完全基于app的模板，PX4官网也有相关的说明。本文的所参照的是PX4中workitem的模板写法，用户可以在nsh终端通过appname start命令来进行程序的启动。\n内部通信 PX4与ROS中的通信机制极为相似。\n在ROS1中消息是publisher节点向ROS master注册topic(维护注册表)，在subscriber节点向ROS master发送订阅请求后，ROS master打通发布者和订阅者之间的p2p连接。\n在PX4采用uORB(micro Object Request Broker)通讯总线实现，publisher发布的uORB topic通过Device Master维护的DeviceNode表格(内部缓冲),subscriber只需要访问DeviceNode表格就行。\n当然在接受数据后的处理层面也有一些不一样，ROS中主要是通过注册回调的方式实现，PX4中可以通过主动轮询实现（也可以注册回调）。\n在PX4中，自定义一个uORB topic需要进入/msg文件夹下面新建.msg文件，或者在已有的.msg文件内部做话题复用。\n任务调度 PX4中，任务调度可以通过2中不同的方式调度：Tasks(任务)和Work queue tasks(工作队列任务)实现，具体可以看我的下一篇文章。\noffboard模式 在普通模式下（如Position、Attitude、Acro），飞控根据遥控器输入和自身控制逻辑来飞行。\n在offboard模式下，飞行器根据飞控外部（如机载电脑）提供的设定值控制位置、速度、加速度、姿态以及推力/力矩，这些设定值可以使用mavlink，也可以使用在PX4内部用户自定义app发布。\n模式的切换需要向话题action_request发布offboard请求，结构如下：\naction_request_s action_request{}; action_request.timestamp = now; action_request.action = action_request_s::ACTION_SWITCH_MODE; action_request.source = action_request_s::SOURCE_RC_SWITCH; action_request.mode = vehicle_status_s::NAVIGATION_STATE_OFFBOARD; _action_request_pub.publish(action_request); 与此同时还要，向话题offboard_control_mode不停发布消息，因为PX4内部的自保护机制，要求在offboard模式下这个话题必须要有2Hz的发布频率，不然就会自动退出offboard模式。\nPX4 requires that the external controller provides a continuous 2Hz “proof of life” signal, by streaming any of the supported MAVLink setpoint messages or the ROS 2 OffboardControlMode message. PX4 enables switching to offboard control mode only after receiving the signal for more than a second, and will failsafe (controlled by COM_OBL_RC_ACT) if the signal stops.\n话题结构如下，后续实现的几何控制器是要控制到转矩和推力的，所以就将其他的全部关闭，只保留最后一个。\noffboard_control_mode_s offboard_ctrl_mode{}; offboard_ctrl_mode.timestamp = hrt_absolute_time(); offboard_ctrl_mode.position = false; offboard_ctrl_mode.velocity = false; offboard_ctrl_mode.acceleration = false; offboard_ctrl_mode.attitude = false; offboard_ctrl_mode.thrust_and_torque = true; _offboard_ctrl_pub.publish(offboard_ctrl_mode); 控制器实现 PX4内部控制链路 这张图取自PX4官方文档，展示了PX4内部的控制框架，其中所有的控制器都采用了PID控制。\n这张图展示了PX4内部的信号流动，方框中是模块名称，箭头上为话题名称，知道了这些，就可以根据所需控制器的结构，对PX4内部控制器模块进行替换。\n几何控制器 这张图取自几何控制器论文原文，控制器部分则是代替了上面那张PX4控制框图中mixer之前的所有部分。\n控制器型式如下：\n\\begin{aligned} f \u0026= -\\left( -k_x e_x - k_v e_v - mg e_3 + m\\ddot{x}_d \\right)\\cdot R e_3, \\\\ M \u0026= -k_R e_R - k_\\Omega e_\\Omega + \\Omega \\times J\\Omega \\\\ \u0026\\quad - J\\left( \\hat{\\Omega} R^{T} R_d \\Omega_d - R^{T} R_d \\dot{\\Omega}_d \\right). \\end{aligned} 为了简化控制器，我们去掉了一些比较复杂的项。\n_acc_command = _des_acc + _pos_error.emult(_pos_gain) + _vel_error.emult(_vel_gain) - g; const matrix::Quatf q_att{_vehicle_attitude.q}; const matrix::Dcmf R_b_w(q_att); const matrix::Matrix3f e_R_matrix = 0.5f * (R_d_w.transpose() * R_b_w - R_b_w. transpose() * R_d_w); Vector3f e_R; e_R(0) = e_R_matrix(2, 1); e_R(1) = e_R_matrix(0, 2); e_R(2) = e_R_matrix(1, 0); const Vector3f omega(_vehicle_angular_velocity.xyz); const Vector3f omega_ref(0.0f, 0.0f, 0.0f); const Vector3f omega_d_b = R_b_w.transpose() * R_d_w * omega_ref; const Vector3f e_omega = omega - omega_d_b; Vector3f tau = -_attitude_gain.emult(e_R) - _angular_rate_gain.emult(e_omega) + omega.cross(_inertia_diag.emult(omega)); 这里计算得到的_acc_command可以理解为目标加速度，乘以m就可以得到推力。\n由于无人机的推力合力始终垂直于机体平面，所以目标姿态的获取是可以通过目标加速度和目标航向角结算得到，这也就是PX4控制框图中Acceleration and Yaw to Attitude所在干的事情。\n规一化控制量问题 PX4中混控器所接受的是规一化的推力和力矩，也就是要将这些量分别映射到[0,1]之间，或者[-1,1]之间。\n这里我总结了两种思路。\n已知无人机机身所有的参数，包括连杆长度，机身重量，转动惯量，电机推力系数等。然后从推力转矩通过数学推导逐步映射到电机规一化油门，然后再逆变换得到规一化的推力和力矩。\n先验参数未知。参考PX4的悬停油门量估计，可以知道加速度和油门之间的映射，同理可以估计角加速度到力矩油门之间的映射，但这只是一个猜想，等待验证。\n参考文献\nLee, Taeyoung, Melvin Leok, and N. Harris McClamroch. “Geometric tracking control of a quadrotor UAV on SE (3).” 49th IEEE conference on decision and control (CDC). IEEE, 2010.\n",
+  "wordCount" : "1921",
+  "inLanguage": "zh",
+  "datePublished": "2026-06-04T17:50:34+08:00",
+  "dateModified": "2026-06-04T17:50:34+08:00",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://TabDynasty.github.io/posts/px4_geometric_controller/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "TabDynasty's Blog",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://TabDynasty.github.io/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+<body id="top">
+    <header class="header">
+    <nav class="header-nav">
+        <div class="logo">
+            <a href="https://TabDynasty.github.io/" accesskey="h" title="TabDynasty&#39;s Blog (Alt + H)">TabDynasty&#39;s Blog</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" class="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
+                    <svg class="moon" xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg class="sun" xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu" class="menu">
+            <li>
+                <a href="https://TabDynasty.github.io/archives/" title="Archive">
+                    <span>Archive</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://TabDynasty.github.io/search/" title="Search (Alt &#43; /)" accesskey=/>
+                    <span>Search</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://TabDynasty.github.io/tags/" title="Tag">
+                    <span>Tag</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    <nav class="breadcrumbs" role="navigation" aria-label="Breadcrumb">
+            <a href="/">主页</a>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-right">
+                <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+            <a href="/posts/">Posts</a>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-right">
+        <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+</nav>
+    <h1 class="post-title entry-hint-parent">
+      PX4几何控制器实现
+    </h1>
+    <div class="post-meta">
+
+<span title='2026-06-04 17:50:34 +0800 +08'>2026年6月4日</span>
+
+</div>
+  </header> <details class="toc" >
+    <summary accesskey="c" title="(Alt + C)">
+        <span class="title">目录</span>
+    </summary>
+
+    <div class="inner"><ul>
+            <li>
+                <a href="#px4-%e4%ba%8c%e6%ac%a1%e5%bc%80%e5%8f%91" aria-label="PX4 二次开发">PX4 二次开发</a><ul>
+                    
+            <li>
+                <a href="#%e5%86%85%e9%83%a8%e9%80%9a%e4%bf%a1" aria-label="内部通信">内部通信</a></li>
+            <li>
+                <a href="#%e4%bb%bb%e5%8a%a1%e8%b0%83%e5%ba%a6" aria-label="任务调度">任务调度</a></li>
+            <li>
+                <a href="#offboard%e6%a8%a1%e5%bc%8f" aria-label="offboard模式">offboard模式</a></li></ul>
+            </li>
+            <li>
+                <a href="#%e6%8e%a7%e5%88%b6%e5%99%a8%e5%ae%9e%e7%8e%b0" aria-label="控制器实现">控制器实现</a><ul>
+                    
+            <li>
+                <a href="#px4%e5%86%85%e9%83%a8%e6%8e%a7%e5%88%b6%e9%93%be%e8%b7%af" aria-label="PX4内部控制链路">PX4内部控制链路</a></li>
+            <li>
+                <a href="#%e5%87%a0%e4%bd%95%e6%8e%a7%e5%88%b6%e5%99%a8" aria-label="几何控制器">几何控制器</a></li>
+            <li>
+                <a href="#%e8%a7%84%e4%b8%80%e5%8c%96%e6%8e%a7%e5%88%b6%e9%87%8f%e9%97%ae%e9%a2%98" aria-label="规一化控制量问题">规一化控制量问题</a>
+            </li>
+        </ul>
+        </li>
+        </ul>
+    </div>
+</details>
+
+  <div class="post-content md-content"><p>PX4是一个能够非常方便进行二次开发的无人机飞控。对于科研的实验算法复现，可以使用PX4开放给开发者的<code>app</code>来完成，本文所复现的几何控制器完成了PX4中混控器之前所有控制器件的作用，最终输出规一化的力和力矩。</p>
+<h2 id="px4-二次开发">PX4 二次开发<a hidden class="anchor" aria-hidden="true" href="#px4-二次开发">#</a></h2>
+<p>PX4源码的目录下面有两个文件夹，<code>/src/examples</code>和<code>/src/modules</code>，前者是专门留给用户进行自定义算法<code>app</code>实现，后者则是将PX4原生的控制器暴露在用户面前，用户可以自定义飞控中控制器的开关。我现在复现的几何控制器就是完全基于<code>app</code>的模板，PX4官网也有相关的<a href="https://docs.px4.io/main/zh/modules/module_template">说明</a>。本文的所参照的是PX4中<code>workitem</code>的模板写法，用户可以在<code>nsh</code>终端通过<code>appname start</code>命令来进行程序的启动。</p>
+<h3 id="内部通信">内部通信<a hidden class="anchor" aria-hidden="true" href="#内部通信">#</a></h3>
+<p>PX4与ROS中的通信机制极为相似。</p>
+<p>在ROS1中消息是<code>publisher</code>节点向<code>ROS master</code>注册<code>topic</code>(维护注册表)，在<code>subscriber</code>节点向<code>ROS master</code>发送订阅请求后，<code>ROS master</code>打通发布者和订阅者之间的<code>p2p</code>连接。</p>
+<p>在PX4采用<code>uORB</code>(micro Object Request Broker)通讯总线实现，<code>publisher</code>发布的<code>uORB topic</code>通过<code>Device Master</code>维护的<code>DeviceNode</code>表格(内部缓冲),<code>subscriber</code>只需要访问<code>DeviceNode</code>表格就行。</p>
+<p>当然在接受数据后的处理层面也有一些不一样，ROS中主要是通过<strong>注册回调的</strong>方式实现，PX4中可以通过<strong>主动轮询</strong>实现（也可以注册回调）。</p>
+<p>在PX4中，自定义一个<code>uORB topic</code>需要进入<code>/msg</code>文件夹下面新建<code>.msg</code>文件，或者在已有的<code>.msg</code>文件内部做话题复用。</p>
+<h3 id="任务调度">任务调度<a hidden class="anchor" aria-hidden="true" href="#任务调度">#</a></h3>
+<p>PX4中，任务调度可以通过2中不同的方式调度：<code>Tasks</code>(任务)和<code>Work queue tasks</code>(工作队列任务)实现，具体可以看我的下一篇文章。</p>
+<h3 id="offboard模式"><code>offboard</code>模式<a hidden class="anchor" aria-hidden="true" href="#offboard模式">#</a></h3>
+<p>在普通模式下（如<code>Position</code>、<code>Attitude</code>、<code>Acro</code>），飞控根据遥控器输入和自身控制逻辑来飞行。</p>
+<p>在<code>offboard</code>模式下，飞行器根据飞控外部（如机载电脑）提供的设定值控制位置、速度、加速度、姿态以及推力/力矩，这些设定值可以使用<code>mavlink</code>，也可以使用在PX4内部用户自定义<code>app</code>发布。</p>
+<p>模式的切换需要向话题<code>action_request</code>发布<code>offboard</code>请求，结构如下：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span>	action_request_s action_request{};
+</span></span><span style="display:flex;"><span>	action_request.timestamp <span style="color:#f92672">=</span> now;
+</span></span><span style="display:flex;"><span>	action_request.action <span style="color:#f92672">=</span> action_request_s<span style="color:#f92672">::</span>ACTION_SWITCH_MODE;
+</span></span><span style="display:flex;"><span>	action_request.source <span style="color:#f92672">=</span> action_request_s<span style="color:#f92672">::</span>SOURCE_RC_SWITCH;
+</span></span><span style="display:flex;"><span>	action_request.mode <span style="color:#f92672">=</span> vehicle_status_s<span style="color:#f92672">::</span>NAVIGATION_STATE_OFFBOARD;
+</span></span><span style="display:flex;"><span>	_action_request_pub.publish(action_request);
+</span></span></code></pre></div><p>与此同时还要，向话题<code>offboard_control_mode</code>不停发布消息，因为PX4内部的自保护机制，要求在<code>offboard</code>模式下这个话题必须要有<code>2Hz</code>的发布频率，不然就会自动退出<code>offboard</code>模式。</p>
+<blockquote>
+<p>PX4 requires that the external controller provides a continuous 2Hz &ldquo;proof of life&rdquo; signal, by streaming any of the supported MAVLink setpoint messages or the ROS 2 OffboardControlMode message. PX4 enables switching to offboard control mode only after receiving the signal for more than a second, and will failsafe (controlled by COM_OBL_RC_ACT) if the signal stops.</p>
+</blockquote>
+<p>话题结构如下，后续实现的几何控制器是要控制到转矩和推力的，所以就将其他的全部关闭，只保留最后一个。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span>	offboard_control_mode_s offboard_ctrl_mode{};
+</span></span><span style="display:flex;"><span>	offboard_ctrl_mode.timestamp <span style="color:#f92672">=</span> hrt_absolute_time();
+</span></span><span style="display:flex;"><span>	offboard_ctrl_mode.position <span style="color:#f92672">=</span> false;
+</span></span><span style="display:flex;"><span>	offboard_ctrl_mode.velocity <span style="color:#f92672">=</span> false;
+</span></span><span style="display:flex;"><span>	offboard_ctrl_mode.acceleration <span style="color:#f92672">=</span> false;
+</span></span><span style="display:flex;"><span>	offboard_ctrl_mode.attitude <span style="color:#f92672">=</span> false;
+</span></span><span style="display:flex;"><span>	offboard_ctrl_mode.thrust_and_torque <span style="color:#f92672">=</span> true;
+</span></span><span style="display:flex;"><span>	_offboard_ctrl_pub.publish(offboard_ctrl_mode);
+</span></span></code></pre></div><h2 id="控制器实现">控制器实现<a hidden class="anchor" aria-hidden="true" href="#控制器实现">#</a></h2>
+<h3 id="px4内部控制链路">PX4内部控制链路<a hidden class="anchor" aria-hidden="true" href="#px4内部控制链路">#</a></h3>
+<figure class="align-center ">
+    <img loading="lazy" src="/photos/mc_control_arch.DPb5OeqV.jpg#center"
+         alt="控制框图"/> 
+</figure>
+
+<p>这张图取自PX4官方文档，展示了PX4内部的控制框架，其中所有的控制器都采用了<code>PID</code>控制。</p>
+<figure class="align-center ">
+    <img loading="lazy" src="/photos/diagram.png#center"
+         alt="PX4内部控制链路流程图" width="50%"/> 
+</figure>
+
+<p>这张图展示了PX4内部的信号流动，方框中是模块名称，箭头上为话题名称，知道了这些，就可以根据所需控制器的结构，对PX4内部控制器模块进行替换。</p>
+<h3 id="几何控制器">几何控制器<a hidden class="anchor" aria-hidden="true" href="#几何控制器">#</a></h3>
+<p><figure class="align-center ">
+    <img loading="lazy" src="/photos/geometric.png#center"
+         alt="PX4内部控制链路流程图"/> 
+</figure>
+
+这张图取自几何控制器论文原文，控制器部分则是代替了上面那张PX4控制框图中<code>mixer</code>之前的所有部分。</p>
+<p>控制器型式如下：</p>
+
+\begin{aligned}
+f &= -\left( -k_x e_x - k_v e_v - mg e_3 + m\ddot{x}_d \right)\cdot R e_3, \\
+M &= -k_R e_R - k_\Omega e_\Omega + \Omega \times J\Omega \\
+&\quad - J\left( \hat{\Omega} R^{T} R_d \Omega_d
+- R^{T} R_d \dot{\Omega}_d \right).
+\end{aligned}
+
+<p>为了简化控制器，我们去掉了一些比较复杂的项。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span>	_acc_command <span style="color:#f92672">=</span> _des_acc <span style="color:#f92672">+</span> _pos_error.emult(_pos_gain) <span style="color:#f92672">+</span> _vel_error.emult(_vel_gain) <span style="color:#f92672">-</span> g;
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">const</span> matrix<span style="color:#f92672">::</span>Quatf q_att{_vehicle_attitude.q};
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">const</span> matrix<span style="color:#f92672">::</span>Dcmf R_b_w(q_att);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">const</span> matrix<span style="color:#f92672">::</span>Matrix3f e_R_matrix <span style="color:#f92672">=</span> <span style="color:#ae81ff">0.5f</span> <span style="color:#f92672">*</span> (R_d_w.transpose() <span style="color:#f92672">*</span> R_b_w <span style="color:#f92672">-</span> 
+</span></span><span style="display:flex;"><span>                                        R_b_w.   transpose() <span style="color:#f92672">*</span> R_d_w);
+</span></span><span style="display:flex;"><span>	Vector3f e_R;
+</span></span><span style="display:flex;"><span>	e_R(<span style="color:#ae81ff">0</span>) <span style="color:#f92672">=</span> e_R_matrix(<span style="color:#ae81ff">2</span>, <span style="color:#ae81ff">1</span>);
+</span></span><span style="display:flex;"><span>	e_R(<span style="color:#ae81ff">1</span>) <span style="color:#f92672">=</span> e_R_matrix(<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">2</span>);
+</span></span><span style="display:flex;"><span>	e_R(<span style="color:#ae81ff">2</span>) <span style="color:#f92672">=</span> e_R_matrix(<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">0</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">const</span> Vector3f <span style="color:#a6e22e">omega</span>(_vehicle_angular_velocity.xyz);
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">const</span> Vector3f <span style="color:#a6e22e">omega_ref</span>(<span style="color:#ae81ff">0.0f</span>, <span style="color:#ae81ff">0.0f</span>, <span style="color:#ae81ff">0.0f</span>);
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">const</span> Vector3f omega_d_b <span style="color:#f92672">=</span> R_b_w.transpose() <span style="color:#f92672">*</span> R_d_w <span style="color:#f92672">*</span> omega_ref;
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">const</span> Vector3f e_omega <span style="color:#f92672">=</span> omega <span style="color:#f92672">-</span> omega_d_b;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	Vector3f tau <span style="color:#f92672">=</span> <span style="color:#f92672">-</span>_attitude_gain.emult(e_R) <span style="color:#f92672">-</span> _angular_rate_gain.emult(e_omega) <span style="color:#f92672">+</span> omega.cross(_inertia_diag.emult(omega));
+</span></span></code></pre></div><p>这里计算得到的<code>_acc_command</code>可以理解为目标加速度，乘以<code>m</code>就可以得到推力。</p>
+<p>由于无人机的推力合力始终垂直于机体平面，所以目标姿态的获取是可以通过目标加速度和目标航向角结算得到，这也就是PX4控制框图中<code>Acceleration and Yaw to Attitude</code>所在干的事情。</p>
+<h3 id="规一化控制量问题">规一化控制量问题<a hidden class="anchor" aria-hidden="true" href="#规一化控制量问题">#</a></h3>
+<p>PX4中混控器所接受的是规一化的推力和力矩，也就是要将这些量分别映射到<code>[0,1]</code>之间，或者<code>[-1,1]</code>之间。</p>
+<p>这里我总结了两种思路。</p>
+<ul>
+<li>
+<p>已知无人机机身所有的参数，包括连杆长度，机身重量，转动惯量，电机推力系数等。然后从推力转矩通过数学推导逐步映射到电机规一化油门，然后再逆变换得到规一化的推力和力矩。</p>
+</li>
+<li>
+<p>先验参数未知。参考PX4的悬停油门量估计，可以知道加速度和油门之间的映射，同理可以估计角加速度到力矩油门之间的映射，但这只是一个猜想，等待验证。</p>
+</li>
+</ul>
+<hr>
+<p><strong>参考文献</strong></p>
+<blockquote>
+<p>Lee, Taeyoung, Melvin Leok, and N. Harris McClamroch. &ldquo;Geometric tracking control of a quadrotor UAV on SE (3).&rdquo; 49th IEEE conference on decision and control (CDC). IEEE, 2010.</p>
+</blockquote>
+
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+      <li><a href="https://TabDynasty.github.io/tags/px4/">PX4</a></li>
+      <li><a href="https://TabDynasty.github.io/tags/controller/">Controller</a></li>
+    </ul>
+<nav class="paginav">
+  <a class="next" href="https://TabDynasty.github.io/posts/test/">
+    <span class="title">下一页 »</span>
+    <span>Test</span>
+  </a>
+</nav>
+
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2026 <a href="https://TabDynasty.github.io/">TabDynasty&#39;s Blog</a></span> · 
+
+    
+    
+    <span>
+        Powered by
+        <a href="https://gohugo.io/?utm_source=papermod" rel="noopener" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" id="top-link" class="top-link hidden" aria-label="go to top" title="Go to Top (Alt + G)" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevrons-up">
+        <polyline points="17 11 12 6 7 11"></polyline>
+        <polyline points="17 18 12 13 7 18"></polyline>
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu');
+    if (menu) {
+        
+        const scrollPosition = localStorage.getItem("menu-scroll-position");
+        if (scrollPosition) {
+            menu.scrollLeft = parseInt(scrollPosition, 10);
+        }
+        
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var toplink = document.getElementById("top-link");
+    window.onscroll = function () {
+        const scrollThreshold = window.innerHeight;
+        if (document.body.scrollTop > scrollThreshold || document.documentElement.scrollTop > scrollThreshold) {
+            toplink.classList.remove("hidden");
+        } else {
+            toplink.classList.add("hidden");
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        const html = document.querySelector("html");
+        if (html.dataset.theme === "dark") {
+            html.dataset.theme = 'light';
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            html.dataset.theme = 'dark';
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerHTML = 'Copy';
+
+        function copyingDone() {
+            copybutton.innerHTML = 'Copied';
+            setTimeout(() => {
+                copybutton.innerHTML = 'Copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>
