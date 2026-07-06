@@ -13,7 +13,7 @@
       <link>https://TabDynasty.github.io/posts/kalmanfilter/</link>
       <pubDate>Fri, 05 Jun 2026 20:04:41 +0800</pubDate>
       <guid>https://TabDynasty.github.io/posts/kalmanfilter/</guid>
-      <description>&lt;p&gt;对卡尔曼滤波器的一些见解，从&lt;strong&gt;状态观测器&lt;/strong&gt;和&lt;strong&gt;高斯分布融合&lt;/strong&gt;的角度分别理解这个算法，个人认为，后者是更加容易理解，且符合直觉的一种解释，文章最后有pdf链接。
+      <description>&lt;p&gt;对卡尔曼滤波器的一些见解，从&lt;strong&gt;状态观测器&lt;/strong&gt;和&lt;strong&gt;高斯分布融合&lt;/strong&gt;的角度分别理解这个算法，个人认为，后者是更加容易理解，而且符合直觉的一种解释，文章最后有pdf链接。
 &lt;img alt=&#34;Kalman Filter PDF preview&#34; loading=&#34;lazy&#34; src=&#34;https://TabDynasty.github.io/files/kalmanfilter-page-1.png&#34;&gt;&lt;/p&gt;</description>
     </item>
     <item>
